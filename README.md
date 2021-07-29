@@ -1,11 +1,11 @@
-# Screenity
+# Orso
 ![Demo](https://media.giphy.com/media/6hc709nFEYnEtzIIyN/giphy.gif)
 <br>
 The most powerful screen recorder & annotation tool for Chrome 🎥
 
 [Get it now - it's free!](https://chrome.google.com/webstore/detail/screenity-screen-recorder/kbbdabhdfibnancpjfhlkhafgdilcnji)
 
-Screenity is a feature-packed screen and camera recorder for Chrome. Annotate your screen to give feedback, emphasize your clicks, edit your recording, and much more.
+Orso is a feature-packed screen and camera recorder for Chrome. Annotate your screen to give feedback, emphasize your clicks, edit your recording, and much more.
 
 Made by [Alyssa X](https://alyssax.com)
 
