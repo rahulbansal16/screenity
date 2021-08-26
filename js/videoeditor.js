@@ -5,6 +5,7 @@ $(document).ready(function(){
     var removeslider = document.getElementById('removeslider');
     var setup = true;
     var downloaded = false;
+    console.log('The recorded blobss are', blobs)
 
     // Show recorded video
     var superBuffer = new Blob(recordedBlobs, {
@@ -115,7 +116,7 @@ $(document).ready(function(){
         $("#video").attr("src", url+"#t="+blobs.length);
         updateRanges(blobs);
     }
-    
+
     // Download video in different formats
     function download() {
         downloaded = true;

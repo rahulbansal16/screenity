@@ -1,23 +1,23 @@
 $(document).ready(function(){
     var recording = false;
-    
+
     // Set up custom dropdowns
     $("#camera-select").niceSelect();
     $("#mic-select").niceSelect();
-    
+
     // Get default settings (set by the user)
     chrome.storage.sync.get(null, function(result) {
         if (!result.toolbar) {
-            $("#persistent").prop("checked", true);  
+            $("#persistent").prop("checked", true);
         }
         if (result.flip) {
-            $("#flip").prop("checked", true);  
+            $("#flip").prop("checked", true);
         }
         if (result.pushtotalk) {
-            $("#push").prop("checked", true);  
+            $("#push").prop("checked", true);
         }
         if (result.countdown) {
-            $("#countdown").prop("checked", true);  
+            $("#countdown").prop("checked", true);
         }
         if (result.quality == "max") {
             $("#quality").html(chrome.i18n.getMessage("smaller_file_size"));
@@ -46,7 +46,7 @@ $(document).ready(function(){
            $("#"+result.type).find("img").attr("src", chrome.extension.getURL('./assets/images/popup/camera-only-active.svg'));
         }
     });
-    
+
     // Start recording
     function record(){
         if (!recording) {
@@ -55,11 +55,11 @@ $(document).ready(function(){
         } else {
             recording = false;
             $("#record").html(chrome.i18n.getMessage("start_recording"));
-            chrome.runtime.sendMessage({type: "stop-save"}); 
+            chrome.runtime.sendMessage({type: "stop-save"});
             window.close();
         }
     }
-    
+
     // Request extension audio access if website denies it (for background)
     function audioRequest() {
         navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
@@ -77,7 +77,7 @@ $(document).ready(function(){
         });
     }
     
-    
+
     // Get available audio devices
     function getAudio(audio) {
         $("#mic-select").html("<option value='disabled'>"+chrome.i18n.getMessage("disabled")+"</option>");
@@ -85,7 +85,7 @@ $(document).ready(function(){
             if (device.label == "Disabled") {
                 $("#mic-select").append("<option value='"+device.id+"'>"+chrome.i18n.getMessage("disabled")+"</option>");
             } else {
-                $("#mic-select").append("<option value='"+device.id+"'>"+device.label+"</option>");   
+                $("#mic-select").append("<option value='"+device.id+"'>"+device.label+"</option>");
             }
         });
         $("#mic-select").niceSelect('update');
@@ -140,7 +140,7 @@ $(document).ready(function(){
             $("#record").addClass("record-stop");
         }
     });
-    
+
     // Check if current tab is unable to be recorded
     chrome.tabs.query({active: true, lastFocusedWindow: true}, tabs => {
         if (tabs[0].url.includes("chrome://") || tabs[0].url.includes("chrome-extension://") || tabs[0].url.includes("chrome.com") || tabs[0].url.includes("chrome.google.com")) {
@@ -339,7 +339,7 @@ $(document).ready(function(){
                 });
             });
         } else if (request.type == "sources-audio-noaccess") {
-            audioRequest();   
+            audioRequest();
         }
     });
     
