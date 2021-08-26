@@ -2,10 +2,9 @@ const decoder = new EBML.Decoder();
 const reader = new EBML.Reader();
 reader.logging = true;
 
-let tasks = Promise.resolve(0);
+let tasks = Promise.resolve(void 0);
 let segmentOffset = 0;
 let metadataElms = [];
-const cluster_ptrs =[];
 let metadataSize = 0;
 let webM = new Blob([], {type: "video/webm"});
 let last_duration = 0;
@@ -17,10 +16,6 @@ const cue_points = [];
 
 reader.addListener("segment_offset", (offset)=>{
   segmentOffset = offset;
-});
-
-reader.addListener("cluster_ptr", (ptr)=>{
-  cluster_ptrs.push(ptr);
 });
 
 reader.addListener("metadata", ({data, metadataSize: size})=>{
@@ -52,9 +47,7 @@ function readAsArrayBuffer(blob) {
     const task = async ()=>{
         const buf = await readAsArrayBuffer(chunk);
         const elms = decoder.decode(buf);
-        elms.forEach((elm)=>{
-          reader.read(elm);
-        });
+        elms.forEach((elm)=>{ reader.read(elm); });
         console.log('In the task method for the chunk', chunk);
     };
     tasks = tasks.then(()=> task() );
@@ -67,9 +60,8 @@ const TrimVideo = async (chunks) => {
     }
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
-        const refinedMetadataElms = EBML.tools.putRefinedMetaData(metadataElms,  cluster_ptrs, last_duration);
-        const refinedMetadataBuf = new Encoder().encode(refinedMetadataElms);
-        const zeroChunk = await modifyMetadata(chunks[0], metadataSize, refinedMetadataBuf)
+        const refinedMetadataBuf = EBML.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
+        const zeroChunk = await modifyMetadata(chunks[0], reader.metadataSize, refinedMetadataBuf)
         chunks[0] = zeroChunk;
         // return chunks;
         resolve(chunks);
