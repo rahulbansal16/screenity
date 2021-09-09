@@ -131,7 +131,7 @@ function newRecording(stream) {
 function saveRecording(recordedBlobs) {
     const refinedMetadataBuf = EBML.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
     awsStorage.completeUpload(reader.metadataSize, refinedMetadataBuf, readAsArrayBuffer).then( res => {
-        console.log('The json is', res);
+        console.log('Uploaded video data successfully. The json is', res);
         newwindow = window.open('https://app.orso.live/video/'+res.id);
         // newwindow = window.open('l')
         // newwindow.recordedBlobs = recordedBlobs;
