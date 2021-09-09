@@ -5,20 +5,19 @@ $(document).ready(function(){
     var removeslider = document.getElementById('removeslider');
     var setup = true;
     var downloaded = false;
-    console.log('The recorded blobss are', blobs)
 
     // Show recorded video
     var superBuffer = new Blob(recordedBlobs, {
         type: 'video/webm'
     });
-
+    
     // Create the src url from the blob. #t=duration is a Chrome bug workaround, as the webm generated through Media Recorder has a N/A duration in its metadata, so you can't seek the video in the player. Using Media Fragments (https://www.w3.org/TR/media-frags/#URIfragment-user-agent) and setting the duration manually in the src url fixes the issue.
     var url = window.URL.createObjectURL(superBuffer);
     $("#video").attr("src", url+"#t="+blobs.length);
     $("#format-select").niceSelect();
     $("#g-savetodrive").attr("src", url);
-
-
+    
+    
     // Convert seconds to timestamp
     function timestamp(value) {
         var sec_num = value;
@@ -31,7 +30,7 @@ $(document).ready(function(){
         if (seconds < 10) {seconds = "0"+seconds;}
         return hours+':'+minutes+':'+seconds;
     }
-
+    
     // Initialize range sliders
     function initRanges() {
         noUiSlider.create(trimslider, {
@@ -43,7 +42,7 @@ $(document).ready(function(){
             }
         });
         $("#trim-end input").val(timestamp(blobs.length));
-
+        
         noUiSlider.create(removeslider, {
             start: [0, blobs.length],
             connect: true,
@@ -92,7 +91,7 @@ $(document).ready(function(){
         $("#video").attr("src", url+"#t="+blobs.length);
         updateRanges(blobs);
     }
-
+    
     // Trim video between two values
     function trim(a, b) {
         blobs = blobs.slice(a, b);
@@ -103,7 +102,7 @@ $(document).ready(function(){
         $("#video").attr("src", url+"#t="+blobs.length);
         updateRanges(blobs);
     }
-
+    
     // Remove part of the video
     function remove(a, b) {
         var start = blobs.slice(0, a);
@@ -116,7 +115,7 @@ $(document).ready(function(){
         $("#video").attr("src", url+"#t="+blobs.length);
         updateRanges(blobs);
     }
-
+    
     // Download video in different formats
     function download() {
         downloaded = true;
@@ -130,12 +129,22 @@ $(document).ready(function(){
                 url: url
             });
             $("#download-label").html(chrome.i18n.getMessage("download"))
-            
+
         } else if ($("#format-select").val() == "webm") {
-            var superBuffer2 = new Blob(blobs, {
-                type: 'video/webm'
+            // var superBuffer2 = new Blob(blobs, {
+            //     type: 'video/webm'
+            // });
+            // var url = window.URL.createObjectURL(superBuffer2);
+            // chrome.downloads.download({
+            //     url: url
+            // });
+
+            var url = window.URL.createObjectURL(zeroChunk);
+            chrome.downloads.download({
+                url: url
             });
-            var url = window.URL.createObjectURL(superBuffer2);
+
+            url = window.URL.createObjectURL(totalChunk);
             chrome.downloads.download({
                 url: url
             });
@@ -147,7 +156,17 @@ $(document).ready(function(){
             convertStreams(superBuffer, "gif");
         }
     }
-    
+
+    downloadVideo = (blobs) => {
+        // var superBuffer2 = new Blob(blobs, {
+            // type: 'video/webm'
+        // });
+        var url = window.URL.createObjectURL(blobs);
+        chrome.downloads.download({
+            url: url
+        });
+    }
+
     // Save on Drive
     function saveDrive() {
         downloaded = true;
@@ -186,7 +205,7 @@ $(document).ready(function(){
             xhr.send(form);
         });
     }
-
+    
     // Check when video has been loaded
     $("#video").on("loadedmetadata", function(){
 
@@ -195,7 +214,7 @@ $(document).ready(function(){
             controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen'],
             ratio: '16:9'
         });
-
+        
         // Check when player is ready
         player.on("canplay", function(){
             // First time setup
@@ -227,7 +246,7 @@ $(document).ready(function(){
     $("#apply-trim").on("click", function(){
         trim(0, parseInt(trimslider.noUiSlider.get()[0]));
     });
-
+    
     // Removing part of the video
     $("#apply-remove").on("click", function(){
         remove(parseInt(removeslider.noUiSlider.get()[0]), parseInt(removeslider.noUiSlider.get()[1]));
