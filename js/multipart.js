@@ -28,6 +28,7 @@ class AWSStorage {
     }
 
     uploadFirst = async (metadataSize, refinedMetadataBuf, readAsArrayBuffer) => {
+        console.log('In the uploadFirst method');
         var newChunk = this.chunks[0]['chunk']
         const partNumber = 1
         const UploadUrl = await (await this.getUploadUrl(partNumber, newChunk.type));
