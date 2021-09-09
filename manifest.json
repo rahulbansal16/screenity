@@ -6,7 +6,7 @@
   "manifest_version": 2,
   "default_locale": "en",
   "background": {
-    "scripts": ["js/multipart.js","js/libraries/EBML.js","js/stream.js","js/background.js"],
+    "scripts": ["js/ebmlToJson.js","js/multipart.js","js/libraries/EBML.js","js/stream.js","js/background.js"],
     "persistent": false
   },
   "browser_action": {
@@ -27,7 +27,7 @@
         }
     ],
   "permissions": [
-    "<all_urls>","activeTab", "tabCapture", "tabs", "storage"],
+    "<all_urls>","activeTab", "tabCapture", "tabs", "storage", "downloads"],
         "web_accessible_resources": [        "html/camera.html","html/sources.html","html/settings.html","js/content.js","css/content.css","assets/images/*","js/sources.js", "js/cameracontent.js", "css/cameracontent.css", "js/libraries/plyr.min.js", "css/libraries/plyr.min.css", "js/audiosources.js", "html/audiosources.html", "js/multipart.js"
     ],
     "commands": {

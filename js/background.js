@@ -30,9 +30,6 @@ var recallSeconds = 10;
 
 // Get list of available audio devices
 getDeviceId();
-// var decoder = EBML.Decoder();
-// var reader = EBML.Reader();
-
 // const decoder = new EBML.Decoder();
 // const reader = new EBML.Reader();
 // reader.logging = true;
@@ -105,16 +102,18 @@ chrome.runtime.onInstalled.addListener(function() {
 });
 
 const maintainBuffer = (blob, length) => {
-    // if (blob.length <= length)
+    if (blob.length <= length)
         return blob
     var e = blob.length
     // // (0 ,20) -->  (0, 10) + (10 ,20)
     // // length = 10
-    var p = [blob[0], blob[1]]
     var k = blob.slice(e-length, e)
-    p.concat(k)
-    console.log('The processed blobs are', p);
-    // console.log('The value of the p is', p)
+    var p = []
+    // p.push(blob[0])
+    for (let blob of k){
+        p.push(blob)
+    }
+    // var p = [blob[0], k]
     // // var newBlob = new Blob(p, {
     // //     type: 'video/webm'
     // // })
@@ -146,11 +145,52 @@ function newRecording(stream) {
 }
 
 // Save recording
-function saveRecording(recordedBlobs) {
-    TrimVideo(recordedBlobs).then( recordedBlobs => {
-        newwindow = window.open('../html/videoeditor.html');
-        newwindow.recordedBlobs = recordedBlobs;
+
+function openNewWindow(zeroChunk, totalChunk, recordedBlobs) {
+    newwindow = window.open('../html/videoeditor.html');
+    newwindow.zeroChunk = zeroChunk;
+    newwindow.totalChunk = totalChunk;
+    newwindow.recordedBlobs = recordedBlobs;
+}
+
+
+
+function processFullandPartial(recordedBlobs){
+    const metaEditor = new MetaEditor()
+    var fullChunk = recordedBlobs.slice()
+    metaEditor.printEBMLJson(metaEditor.combineChunks(recordedBlobs)).then( () => {
+        console.log('The full Video Printed', fullChunk)
+        recordedBlobs = maintainBuffer(recordedBlobs, recallSeconds)
+        var partialChunk = recordedBlobs.slice()
+        console.log('The partial Video Printed', partialChunk)
+        metaEditor.printEBMLJson(metaEditor.combineChunks(recordedBlobs)).then( () => {
+            openNewWindow(metaEditor.combineChunks(partialChunk), metaEditor.combineChunks(fullChunk), fullChunk )
+        })
     })
+
+}
+
+function saveRecording(recordedBlobs) {
+    processFullandPartial(recordedBlobs)
+    // const metaEditor = new MetaEditor()
+    // console.log('The First Chunk is')
+    // metaEditor.printEBMLJson(recordedBlobs[0]).then( () => {
+
+    //     console.log('Printing the Raw EBML JSON')
+    //     metaEditor.printEBMLJson(metaEditor.combineChunks(recordedBlobs)).then( () => {
+    //         console.log('All Printed')
+    //         openNewWindow(recordedBlobs[0], metaEditor.combineChunks(recordedBlobs), recordedBlobs )
+    //     })
+    // })
+
+    // metaEditor.generateSeekableVideo(recordedBlobs).then( video => {
+    //     console.log('Printing the refined EBML JSON')
+    //     console.log(metaEditor.printEBMLJson(video))
+    // })
+    // TrimVideo(recordedBlobs).then( recordedBlobs => {
+        // newwindow = window.open('../html/videoeditor.html');
+        // newwindow.recordedBlobs = recordedBlobs;
+    // })
     // const refinedMetadataBuf = EBML.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
     // awsStorage.completeUpload(reader.metadataSize, refinedMetadataBuf, readAsArrayBuffer).then( res => {
     //     console.log('The json is', res);
@@ -200,8 +240,7 @@ function endRecording(stream, recordedBlobs) {
 //     });
 //   }
 
-// const createMetaInfo = (event) => {
-//     const chunk = event.data
+// const createMetaInfo = (chunk) => {
 //     const task = async ()=>{
 //         const buf = await readAsArrayBuffer(chunk);
 //         const elms = decoder.decode(buf);
@@ -239,9 +278,11 @@ function getDesktop() {
 
         // Record desktop stream
         var recordedBlobs = [];
+        var metaEditor = new MetaEditor();
         mediaRecorder.ondataavailable = event => {
             if (event.data && event.data.size > 0) {
                 // createMetaInfo(event)
+                console.log('The live EBML data is',metaEditor.printEBMLJson(event.data));
                 recordedBlobs.push(event.data);
                 // awsStorage.uploadPart(event.data)
                 // recordedBlobs = maintainBuffer(recordedBlobs, recallSeconds)
@@ -301,12 +342,15 @@ function getTab() {
 
             // Record tab stream
             var recordedBlobs = [];
+            var metaEditor = new MetaEditor()
             mediaRecorder.ondataavailable = event => {
                 if (event.data && event.data.size > 0) {
                     // createMetaInfo(event)
                     recordedBlobs.push(event.data);
+                    // console.log('The live EBML data is',metaEditor.printEBMLJson(event.data));
+                    recordedBlobs.push(event.data);
                     // awsStorage.uploadPart(event.data)
-                    recordedBlobs = maintainBuffer(recordedBlobs, recallSeconds)
+                    // recordedBlobs = maintainBuffer(recordedBlobs, recallSeconds)
                 }
             };
 
@@ -548,8 +592,7 @@ function stopRecording(save) {
 
     // Show default icon
     chrome.browserAction.setIcon({path: "../assets/extension-icons/logo-32.png"});
-    reader.stop()
-    chrome.tabs.getSelected(null, function(tab) {
+     chrome.tabs.getSelected(null, function(tab) {
         // Check if recording has to be saved or discarded
         if (save == "stop" || save == "stop-save") {
             cancel = false;
@@ -837,3 +880,61 @@ chrome.runtime.onMessage.addListener(
         }
     }
 );
+
+// const combineChunks = (chunks) => {
+//     return new Blob(chunks, {
+//         type: 'video/webm'
+//     });
+// }
+
+// const TrimVideo = async (chunks) => {
+//     // const combinedChunks = await combineChunks(chunks);
+//     // const chunkBuff = await readAsArrayBuffer(combinedChunks);
+//     // const ebmlToJson = new EbmlToJson(chunkBuff);
+//     // console.log(ebmlToJson.toString());
+
+//     // return new Promise((resolve, reject) => resolve(combinedChunks))
+
+//     for (let chunk in chunks){
+//         await createMetaInfo(chunks[chunk]);
+//     }
+
+//     // reader.stop();
+//     // console.log('The refined details are \n');
+//     // const refinedMetadataBuf = EBML.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
+//     // const zeroChunk = await modifyMetadata(chunks[0], reader.metadataSize, refinedMetadataBuf)
+//     // chunks[0] = zeroChunk;
+//     // const refinedChunks = combinedChunks(chunks);
+//     // const refinedChunksBuf = await readAsArrayBuffer(refinedChunks);
+//     // const elms = decoder.decode(refinedChunksBuf);
+//     // console.log(elms);
+
+
+
+
+//     // return chunks;
+
+
+//     return new Promise( (resolve, reject) => {
+
+//         setTimeout( resolve(100), 100 );
+//     })
+//     reader.stop()
+//     return new Promise((resolve, reject) => {
+//       setTimeout(async () => {
+//         const refinedMetadataBuf = EBML.tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
+//         const zeroChunk = await modifyMetadata(chunks[0], reader.metadataSize, refinedMetadataBuf)
+//         chunks[0] = zeroChunk;
+//         // return chunks;
+//         resolve(chunks);
+//       }, 3000)
+//     })
+// }
+
+// const modifyMetadata = async (chunk, metadataSize, refinedMetadataBuf) => {
+//     const webMBuf = await readAsArrayBuffer(chunk);
+//     // There is possibility of pre append the metadata instead of making a slice
+//     const body = webMBuf.slice(metadataSize)
+//     const refinedWebM = new Blob([refinedMetadataBuf, body], {type: webM.type});
+//     return refinedWebM
+// }

@@ -64,7 +64,18 @@ class MetaEditor {
         const ebmlToJson = new EbmlToJson(webmBuff);
         const json = ebmlToJson.toString()
         console.log('The json is', json);
-        return json;
+        // this.downloadVideo(webmBlob)
+        return webmBlob;
+    }
+
+    downloadVideo = (blobs) => {
+        // var superBuffer2 = new Blob(blobs, {
+            // type: 'video/webm'
+        // });
+        var url = window.URL.createObjectURL(blobs);
+        chrome.downloads.download({
+            url: url
+        });
     }
 
 }
