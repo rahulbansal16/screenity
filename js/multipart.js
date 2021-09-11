@@ -5,7 +5,8 @@ class Chunks {
     }
 }
 const MIN_SIZE = 6000000
-const BASE_URL = "https://bauuv39b7h.execute-api.us-east-1.amazonaws.com/dev/";
+const BASE_URL = "https://8hqp2xgk6f.execute-api.us-east-1.amazonaws.com/dev/";
+// const BASE_URL = "https://bauuv39b7h.execute-api.us-east-1.amazonaws.com/dev/";
 
 class AWSStorage {
 
