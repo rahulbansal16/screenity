@@ -10,9 +10,10 @@ const BASE_URL = "https://8hqp2xgk6f.execute-api.us-east-1.amazonaws.com/dev/";
 
 class AWSStorage {
 
-    constructor(FileName){
+    constructor(FileName, uid){
         this.FileName = FileName
         this.startUploadPromise=this.startUpload(FileName)
+        this.uid = uid
         this.uploaded = {}
         this.chunks = []
         this.promises = []
@@ -126,7 +127,7 @@ class AWSStorage {
         }
 
         request.Parts.sort((e1, e2) => { return e1.PartNumber - e2.PartNumber })
-
+        request.uid = this.uid || "unknown_multipart";
         const COMPLETE_UPLOAD = "upload/complete"
         console.log('In the completeUpload method', request);
         const res = await fetch( BASE_URL + COMPLETE_UPLOAD,{

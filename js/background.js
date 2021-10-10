@@ -75,8 +75,19 @@ function generateUId(length) {
     return result.trim();
 }
 
+function generateUserId(prefix,length) {
+    const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = ' ';
+    const charactersLength = characters.length;
+    for ( let i = 0; i < length; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    result = prefix + result.trim()
+    return result.trim().toLocaleLowerCase();
+}
+
 chrome.runtime.onInstalled.addListener(function() {
-    // Set defaults when the extension is installed
+    // set defaults when the extension is installed
     chrome.storage.sync.set({
         toolbar: true,
         countdown: true,
@@ -85,6 +96,7 @@ chrome.runtime.onInstalled.addListener(function() {
         pushtotalk: false,
         camera: 0,
         mic: 0,
+        uid: generateUserId('user', 10),
         type: "tab-only",
         quality: "max",
         fps: 60
@@ -102,11 +114,27 @@ chrome.runtime.onInstalled.addListener(function() {
     });
 });
 
+function getUid() {
+    return new Promise( (resolve, reject) => {
+        chrome.storage.sync.get(['uid'], result => {
+            if (!result){
+                const uid = generateUserId("user", 10)
+                resolve(uid)
+                chrome.storage.sync.set({
+                    uid: uid
+                })
+                return
+            }
+            resolve(result.uid)
+        })
+    })
+}
+
 // Set up recording
-function newRecording(stream) {
+function newRecording(stream, uid) {
     // Show recording icon
     chrome.browserAction.setIcon({path: "../assets/extension-icons/logo-32-rec.png"});
-
+    console.log('The newRecording uid is', uid)
     // Start Media Recorder
     if (quality == "max") {
         mediaConstraints = {
@@ -118,7 +146,7 @@ function newRecording(stream) {
             bitsPerSecond: 1000
         }
     }
-    awsStorage = new AWSStorage(generateUId(10))
+    awsStorage = new AWSStorage(generateUId(10), uid)
     mediaRecorder = new MediaRecorder(stream, mediaConstraints);
     chunkTimer = setInterval( () => {
         if (mediaRecorder.state !== 'inactive')
@@ -194,7 +222,7 @@ function getDesktop() {
         video: true,
         maxframeRate: fps
     };
-    navigator.mediaDevices.getDisplayMedia(constraints).then(function(stream) {
+    navigator.mediaDevices.getDisplayMedia(constraints).then( async function(stream) {
         output = new MediaStream();
         if (stream.getAudioTracks().length == 0) {
             // Get microphone audio (system audio is unreliable & doesn't work on Mac)
@@ -213,7 +241,9 @@ function getDesktop() {
         output.addTrack(stream.getVideoTracks()[0]);
 
         // Set up media recorder & inject content
-        newRecording(output);
+        const uid = await getUid()
+        console.log('The uid is', uid)
+        newRecording(output, uid);
 
         // Record desktop stream
         var recordedBlobs = [];
@@ -257,7 +287,7 @@ function getTab() {
                     maxFrameRate: fps
                 },
             },
-        }, function(stream) {
+        }, async function(stream) {
             // Combine tab and microphone audio
             output = new MediaStream();
             syssource = audioCtx.createMediaStreamSource(stream);
@@ -274,7 +304,9 @@ function getTab() {
             this.stream.connect(this.context.destination);
 
             // Set up media recorder & inject content
-            newRecording(output)
+            const uid = await getUid()
+            console.log('The uid is', uid)
+            newRecording(output, uid)
 
             // Record tab stream
             var recordedBlobs = [];
@@ -680,6 +712,9 @@ chrome.tabs.onActivated.addListener(function(tabId, changeInfo, tab) {
     if (!recording) {
         // Hide injected content if the recording is already over
         chrome.tabs.getSelected(null, function(tab) {
+            if (!tab.id){
+                return
+            }
             chrome.tabs.sendMessage(tab.id, {
                 type: "end"
             });
