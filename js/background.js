@@ -96,7 +96,7 @@ chrome.runtime.onInstalled.addListener(function() {
         pushtotalk: false,
         camera: 0,
         mic: 0,
-        uid: generateUserId('user', 10),
+        uid: generateUserId('user:', 15),
         type: "tab-only",
         quality: "max",
         fps: 60
